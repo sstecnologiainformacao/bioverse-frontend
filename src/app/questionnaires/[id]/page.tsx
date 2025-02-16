@@ -9,17 +9,28 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
+interface iQuestion {
+  id: number,
+  question: {
+    question: {
+      question: string;
+      type: string;
+      options: Array<string>
+    }
+  }
+};
+
 export default function QuestionnairePage() {
   const params = useParams();
   const id = params?.id as string;
-  const { user, loading } = useAuth();
+  const { user, loading } = useAuth() || { user: { role: null, username: null }, loading: false };
   const router = useRouter();
   const searchParams = useSearchParams();
   const username = user?.username || searchParams.get("username");
 
   const [name, setName] = useState<string>()
-  const [questions, setQuestions] = useState<any[]>([]);
-  const [answers, setAnswers] = useState<{ [key: number]: any }>({});
+  const [questions, setQuestions] = useState<iQuestion[]>([]);
+  const [answers, setAnswers] = useState<{ [key: number]: unknown }>({});
   const [loadingData, setLoadingData] = useState(true);
 
   useEffect(() => {
@@ -43,8 +54,8 @@ export default function QuestionnairePage() {
         const resAnswers = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/responses/${username}/${id}`);
         const dataAnswers = await resAnswers.json();
 
-        // Preencher automaticamente as respostas anteriores
-        const formattedAnswers = dataAnswers.reduce((acc: any, response: any) => {
+        const formattedAnswers = dataAnswers.reduce((acc: unknown, response: unknown) => {
+          //@ts-expect-error: mapping the answers
           acc[response.question.id] = response.answer;
           return acc;
         }, {});
@@ -60,7 +71,7 @@ export default function QuestionnairePage() {
     fetchData();
   }, [id, username]);
 
-  const handleAnswerChange = (questionId: number, value: any) => {
+  const handleAnswerChange = (questionId: number, value: unknown) => {
     setAnswers((prev) => ({
       ...prev,
       [questionId]: value,
@@ -112,7 +123,7 @@ export default function QuestionnairePage() {
                   <p className="font-semibold">{question.question.question.question}</p>
                   {question.question.question.type === "mcq" ? (
                     <RadioGroup
-                      value={answers[question.id] || ""}
+                      value={answers[question.id] as string || ""}
                       onValueChange={(value) => handleAnswerChange(question.id, value)}
                     >
                       {question.question.question.options.map((option: string, index: number) => (
@@ -125,7 +136,7 @@ export default function QuestionnairePage() {
                   ) : (
                     <Input
                       type="text"
-                      value={answers[question.id] || ""}
+                      value={answers[question.id] as string || ""}
                       onChange={(e) => handleAnswerChange(question.id, e.target.value)}
                       className="border-black"
                     />

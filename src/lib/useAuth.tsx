@@ -1,13 +1,24 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-const AuthContext = createContext(null);
+interface AuthContextType {
+  user: iUser | undefined;
+  login: (userData: iUser) => void;
+  loading: boolean;
+}
 
-export function AuthProvider({ children }) {
+const AuthContext = createContext<AuthContextType | null>(null);
+
+interface iUser {
+  role: string,
+  username: null;
+}
+
+export function AuthProvider({ children }: { children: ReactNode}) {
   const router = useRouter();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<iUser>();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,7 +29,7 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
-  const login = (userData) => {
+  const login = (userData: iUser) => {
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
     if (userData.role === 'admin') {
@@ -28,14 +39,8 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('user');
-    setUser(null);
-    router.push('/login');
-  };
-
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, loading }}>
       {children}
     </AuthContext.Provider>
   );

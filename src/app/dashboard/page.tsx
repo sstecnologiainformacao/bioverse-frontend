@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export default function AdminDashboard() {
-  const { user, loading } = useAuth();
+  const { user, loading } = useAuth() || { user: { role: null }, loading: false };
   const router = useRouter();
   const [users, setUsers] = useState<{ username: string; completedQuestionnaires: number }[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);

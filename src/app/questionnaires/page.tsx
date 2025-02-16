@@ -6,10 +6,15 @@ import { useAuth } from '@/lib/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
+interface iQuestionnaires {
+  id: number;
+  name: string
+}
+
 export default function QuestionnairesPage() {
-  const { user, loading } = useAuth();
+  const { user, loading } = useAuth()  || { user: { role: null, username: null }, loading: false };
   const router = useRouter();
-  const [questionnaires, setQuestionnaires] = useState([]);
+  const [questionnaires, setQuestionnaires] = useState<iQuestionnaires[]>([]);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -26,6 +31,7 @@ export default function QuestionnairesPage() {
         const data = await res.json();
         setQuestionnaires(data);
       } catch (err) {
+        console.error(err);
         setError('Fail to get the questionnaires.');
       }
     };

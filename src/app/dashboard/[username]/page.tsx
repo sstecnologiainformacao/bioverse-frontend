@@ -7,15 +7,36 @@ import { useAuth } from "@/lib/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
+interface iItem {
+  date: string;
+  items: Array<unknown>;
+}
+
+interface iMap {
+  [key: string]: iItem;
+}
+
+interface iResponse {
+  questionnaire: {
+    name: string
+  },
+   question: {
+    question: { 
+      question: string
+    }
+  },
+   answer: string
+};
+
 export default function UserResponsesPage() {
   const params = useParams();
-  const { user, loading } = useAuth();
+  const { user, loading } = useAuth() || { user: { role: null }, loading: false };
   const router = useRouter();
-  const [responses, setResponses] = useState<any[]>([]);
+  const [responses, setResponses] = useState<object>();
   const [loadingData, setLoadingData] = useState(true);
 
   useEffect(() => {
-    if (!loading && (!user || user.role !== "admin")) {
+    if (!loading && (!user || user?.role !== "admin")) {
       router.push("/login");
     }
   }, [user, loading, router]);
@@ -25,7 +46,7 @@ export default function UserResponsesPage() {
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/users/${params.username}`);
         const data = await res.json();
-        const groupByDate = {};
+        const groupByDate = {} as iMap;
         data.map((response: { createdAt: string}) => {
             const { createdAt } = response;
             const formmated = new Date(createdAt).toLocaleString("en-US", {
@@ -36,8 +57,9 @@ export default function UserResponsesPage() {
                 minute: "2-digit",
                 hour12: true,
               });
-            let group: unknown = groupByDate[formmated] || { date: formmated, items: []};
-            group = {...group, items: [...group.items,response]};
+            
+            let group: iItem = groupByDate[formmated] || { date: formmated, items: []};
+            group = {...group, items: [...group.items, response]};
             groupByDate[formmated] = {...group };
         });
         setResponses(groupByDate);
@@ -60,13 +82,13 @@ export default function UserResponsesPage() {
           <CardTitle className="text-center">Answers of {params.username}</CardTitle>
         </CardHeader>
         <CardContent>
-          {responses.length === 0 ? (
+          {!responses ? (
             <p className="text-center text-gray-500">No answer found.</p>
           ) : (
                 Object.entries(responses).map(([key, value]) => (
-                    <CardContent>
+                    <CardContent key={key}> 
                         <p className="text-center text-gray-500">{key}</p>
-                        {value.items.map((response, index) => (
+                        {value.items.map((response: iResponse, index: number) => (
                             <div key={index} className="border-b border-black pb-4 mb-4">
                                 <p className="font-bold">{response.questionnaire.name}</p>
                                 <p className="text-sm text-gray-700">{response.question.question.question}</p>
